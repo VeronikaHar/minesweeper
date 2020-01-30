@@ -17,6 +17,7 @@ export default class Index extends React.Component {
     mines: 5,
     boardSize: 4,
     mineIndeces: [],
+    flagIndeces: [],
   }
 
   //create a deskboard of assigned size
@@ -26,10 +27,25 @@ export default class Index extends React.Component {
       squareArr.push(
         <Square
           key={i}
+          onContextMenu={(e) => {
+            //prevent left click default menu from opening
+            e.preventDefault(),
+              this.handleLeftClick(i)
+          }}
         />)
     }
     return squareArr;
+  }
 
+  //function that handles left click
+  handleLeftClick(i) {
+    const index = this.state.flagIndeces.indexOf(i);
+    if (index > -1) {
+      this.state.flagIndeces.splice(index, 1);
+      this.setState({ flagIndeces: this.state.flagIndeces });
+    } else {
+      this.setState({ flagIndeces: [...this.state.flagIndeces, i] })
+    }
   }
 
   //assign random indeces from the board to mines
