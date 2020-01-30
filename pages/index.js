@@ -18,6 +18,14 @@ export default class Index extends React.Component {
     boardSize: 4,
     mineIndeces: [],
     flagIndeces: [],
+    bombClicked: false
+  }
+
+  //function that handles right click
+  handleRightClick(i) {
+    if (this.state.mineIndeces.includes(i)) {
+      this.setState({ bombClicked: true })
+    }
   }
 
   //create a deskboard of assigned size
@@ -27,12 +35,16 @@ export default class Index extends React.Component {
       squareArr.push(
         <Square
           key={i}
+          disabled={this.state.bombClicked ? i + 1 : ""}
+          onClick={() => this.handleRightClick(i)}
           onContextMenu={(e) => {
             //prevent left click default menu from opening
             e.preventDefault(),
               this.handleLeftClick(i)
           }}
-        />)
+        > {this.state.mineIndeces.includes(i) && this.state.bombClicked ? <Mine /> : ""}
+          {this.state.flagIndeces.includes(i) && !this.state.bombClicked ? <Flag /> : ""}
+        </Square>)
     }
     return squareArr;
   }
