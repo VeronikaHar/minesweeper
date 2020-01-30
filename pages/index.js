@@ -16,6 +16,7 @@ export default class Index extends React.Component {
   state = {
     mines: 5,
     boardSize: 4,
+    mineIndeces: [],
   }
 
   //create a deskboard of assigned size
@@ -29,6 +30,23 @@ export default class Index extends React.Component {
     }
     return squareArr;
 
+  }
+
+  //assign random indeces from the board to mines
+  placeMine = () => {
+    let mineIndeces = [];
+    for (let i = 0; mineIndeces.length < this.state.mines; i++) {
+      let index = Math.floor(Math.random() * this.state.boardSize * this.state.boardSize);
+      if (mineIndeces.indexOf(index) === -1) {
+        mineIndeces.push(index);
+      }
+    }
+    mineIndeces.sort((a, b) => a - b);
+    this.setState({ mineIndeces });
+  }
+
+  componentDidMount() {
+    this.placeMine()
   }
 
   render() {
