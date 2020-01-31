@@ -17,39 +17,60 @@ export default class Index extends React.Component {
     mines: 5,
     boardSize: 4,
     mineIndeces: [],
+    mineCoord: [],
     flagIndeces: [],
-    bombClicked: false
-  }
-
-  //function that handles right click
-  handleRightClick(i) {
-    if (this.state.mineIndeces.includes(i)) {
-      this.setState({ bombClicked: true })
-    }
+    bombClicked: false,
+    board: []
   }
 
   //create a deskboard of assigned size
   createBoard() {
     let squareArr = [];
     for (let i = 0; i < (this.state.boardSize * this.state.boardSize); i++) {
+      let y = Math.floor(i / this.state.boardSize),
+        x = i - (this.state.boardSize * y);
       squareArr.push(
         <Square
           key={i}
           disabled={this.state.bombClicked ? i + 1 : ""}
-          onClick={() => this.handleRightClick(i)}
+          onClick={() => this.handleRightClick(i, x, y)}
           onContextMenu={(e) => {
             //prevent left click default menu from opening
             e.preventDefault(),
               this.handleLeftClick(i)
           }}
-        > {this.state.mineIndeces.includes(i) && this.state.bombClicked ? <Mine /> : ""}
+        > {i}
+          {this.state.mineIndeces.includes(i) && this.state.bombClicked ? <Mine /> : ""}
           {this.state.flagIndeces.includes(i) && !this.state.bombClicked ? <Flag /> : ""}
         </Square>)
     }
     return squareArr;
   }
 
-  //function that handles left click
+  //initializes a two dimensional board with bombs placed
+  initBoard(boardSize, mineCoord) {
+    const board = [];
+    for (let i = 0; i < boardSize; i++) {
+      board[i] = [];
+      for (let j = 0; j < boardSize; j++) {
+        board[i][j] = {
+          isRevealed: false,
+          value: "",
+          x: j,
+          y: i
+        };
+      }
+    }
+
+    //place bombs
+    mineCoord.forEach(mine => {
+      board[mine.x][mine.y].value = <Mine />;
+    });
+
+    this.setState({ board })
+  }
+
+  //handle left click
   handleLeftClick(i) {
     const index = this.state.flagIndeces.indexOf(i);
     if (index > -1) {
@@ -60,7 +81,22 @@ export default class Index extends React.Component {
     }
   }
 
-  //assign random indeces from the board to mines
+  //handle right click
+  handleRightClick(i, x, y) {
+    if (this.state.mineIndeces.includes(i)) {
+      this.setState({ bombClicked: true })
+    } else {
+      this.revealCell(x, y)
+      console.log(this.state.board[x][y])
+    }
+  }
+
+  //return a number of mines in neighbouring cells
+  revealCell(x, y) {
+    this.state.board[x][y].isRevealed = true
+  }
+
+  //assign random indeces from the board to mines and get mine coordinates on the board
   placeMine = () => {
     let mineIndeces = [];
     for (let i = 0; mineIndeces.length < this.state.mines; i++) {
@@ -69,12 +105,23 @@ export default class Index extends React.Component {
         mineIndeces.push(index);
       }
     }
-    mineIndeces.sort((a, b) => a - b);
-    this.setState({ mineIndeces });
+
+    let mineCoord = [];
+    for (let i = 0; i < mineIndeces.length; i++) {
+      let y = Math.floor(mineIndeces[i] / this.state.boardSize),
+        x = mineIndeces[i] - (this.state.boardSize * y);
+      mineCoord.push({ x, y })
+    }
+
+    this.setState({ mineCoord, mineIndeces });
+  }
+
+  componentWillMount() {
+    this.placeMine();
   }
 
   componentDidMount() {
-    this.placeMine()
+    this.initBoard(this.state.boardSize, this.state.mineCoord)
   }
 
   render() {
