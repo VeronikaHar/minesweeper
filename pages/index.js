@@ -23,7 +23,7 @@ export default class Index extends React.Component {
     board: []
   }
 
-  //create a deskboard of assigned size
+  //create an array of Square elements
   createBoard() {
     let squareArr = [];
     for (let i = 0; i < (this.state.boardSize * this.state.boardSize); i++) {
@@ -32,15 +32,16 @@ export default class Index extends React.Component {
       squareArr.push(
         <Square
           key={i}
-          disabled={this.state.bombClicked ? i + 1 : ""}
+          disabled={this.state.bombClicked ? i + 1 : "" || this.state.board[0] && this.state.board[x][y].isRevealed ? this.state.board[x][y] : ""}
           onClick={() => this.handleRightClick(i, x, y)}
           onContextMenu={(e) => {
             //prevent left click default menu from opening
             e.preventDefault(),
               this.handleLeftClick(i)
           }}
-        > {i}
+        >
           {this.state.mineIndeces.includes(i) && this.state.bombClicked ? <Mine /> : ""}
+          {this.state.board[0] && this.state.board[x][y].isRevealed ? this.state.board[x][y].value : ""}
           {this.state.flagIndeces.includes(i) && !this.state.bombClicked ? <Flag /> : ""}
         </Square>)
     }
@@ -56,15 +57,15 @@ export default class Index extends React.Component {
         board[i][j] = {
           isRevealed: false,
           value: "",
-          x: j,
-          y: i
+          x: i,
+          y: j,
         };
       }
     }
 
     //place bombs
     mineCoord.forEach(mine => {
-      board[mine.x][mine.y].value = <Mine />;
+      board[mine.x][mine.y].value = "Mine";
     });
 
     this.setState({ board })
@@ -84,16 +85,42 @@ export default class Index extends React.Component {
   //handle right click
   handleRightClick(i, x, y) {
     if (this.state.mineIndeces.includes(i)) {
-      this.setState({ bombClicked: true })
+      this.setState({ bombClicked: true });
     } else {
       this.revealCell(x, y)
-      console.log(this.state.board[x][y])
     }
   }
 
   //return a number of mines in neighbouring cells
   revealCell(x, y) {
-    this.state.board[x][y].isRevealed = true
+    let board = { ...this.state.board };
+
+    // check whether the coordinates are valid 
+    if (this.state.boardSize > x && x > -1 &&
+      this.state.boardSize > y && y > -1) {
+      board[x][y].isRevealed = true;
+
+      const mineCount = this.countMines(x, y);
+      board[x][y].value = mineCount;
+
+    }
+    this.setState({ board });
+  }
+
+  //count mines in neighbouring cells
+  countMines(x, y) {
+    let mineCount = 0;
+    //loop through all adjacent cells
+    for (let i = x - 1; i < x + 2; i++) {
+      for (let j = y - 1; j < y + 2; j++) {
+        if (this.state.boardSize > i && i > -1 &&
+          this.state.boardSize > j && j > -1) {
+          console.log("IJ", i, j)
+          if (this.state.board[i][j].value == "Mine") { mineCount++; }
+        } else { continue }
+      }
+    }
+    return mineCount;
   }
 
   //assign random indeces from the board to mines and get mine coordinates on the board
