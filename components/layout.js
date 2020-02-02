@@ -4,8 +4,14 @@ import { StyleProvider } from 'cf-style-nextjs';
 import { createComponent } from 'cf-style-container';
 
 const Center = createComponent(({ theme }) => ({
-  margin: '0px auto',
-  margin: theme.space[4]
+  margin: '5% auto',
+  padding: '25px',
+  borderRadius: '5px',
+  backgroundColor: "#FAF2EB",
+  width: "fit-content",
+  textAlign: 'center',
+  color: '#4F707A',
+  fontFamily: 'Slabo 27px'
 }));
 
 export default ({ children, title = 'Minesweeper', mineCount }) => (
