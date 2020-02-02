@@ -8,11 +8,12 @@ const Center = createComponent(({ theme }) => ({
   margin: theme.space[4]
 }));
 
-export default ({ children, title = 'Minesweeper' }) => (
+export default ({ children, title = 'Minesweeper', mineCount }) => (
   <StyleProvider>
     <Center>
-        <h1>{title}</h1>
-        {children}
+      <h1>{title}</h1>
+      <h3>{mineCount}</h3>
+      {children}
     </Center>
   </StyleProvider>
 );

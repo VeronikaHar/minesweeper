@@ -20,7 +20,9 @@ export default class Index extends React.Component {
     mineCoord: [],
     flagIndeces: [],
     bombClicked: false,
-    board: []
+    board: [],
+    gameStatus: "(active)",
+    minesLeft: 0
   }
 
   //create an array of Square elements
@@ -99,7 +101,7 @@ export default class Index extends React.Component {
     return mineCount;
   }
 
-  //handle left click
+  //handle left click by placing or removing a flag and counting mines
   handleLeftClick(i) {
     const index = this.state.flagIndeces.indexOf(i);
     if (index > -1) {
@@ -107,13 +109,15 @@ export default class Index extends React.Component {
       this.setState({ flagIndeces: this.state.flagIndeces });
     } else {
       this.setState({ flagIndeces: [...this.state.flagIndeces, i] })
-    }
+    };
+    this.setState({ mineCount: this.state.mines - this.state.flagIndeces.length - 1 })
   }
 
   //handle right click
   handleRightClick(i, x, y) {
     if (this.state.mineIndeces.includes(i)) {
-      this.setState({ bombClicked: true });
+      this.setState({ bombClicked: true, gameStatus: "(game over)" });
+      alert("Bang! You lost...");
     } else {
       this.revealCell(x, y);
 
@@ -131,6 +135,9 @@ export default class Index extends React.Component {
         }
       }
     }
+
+    //check whether all cells without mines revealed
+    this.gameWon();
   }
 
   //return a number of mines in neighbouring cells
@@ -139,6 +146,22 @@ export default class Index extends React.Component {
 
     board[x][y].isRevealed = true;
     this.setState({ board });
+  }
+
+  //check whether the number of hidden cells equals the number of mines, i.e. game won
+  gameWon() {
+    const cellHidden = [];
+    Object.values(this.state.board).map(row => row.map((cell) => {
+      if (!cell.isRevealed) {
+        cellHidden.push(cell);
+      }
+    }
+    ));
+
+    if (cellHidden.length === this.state.mines) {
+      this.setState({ gameStatus: "(You won!)" });
+      alert("Congratulations! You won!");
+    }
   }
 
   //assign random indeces from the board to mines and get mine coordinates on the board
@@ -163,6 +186,7 @@ export default class Index extends React.Component {
 
   componentWillMount() {
     this.placeMine();
+    this.setState({ mineCount: this.state.mines })
   }
 
   componentDidMount() {
@@ -171,7 +195,7 @@ export default class Index extends React.Component {
 
   render() {
     return (
-      <Layout title={`Minesweeper (active)`}>
+      <Layout title={`Minesweeper ${this.state.gameStatus}`} mineCount={`Mines left: ${this.state.mineCount}`}>
         <Desk boardSize={this.state.boardSize}>
           {this.createBoard()}
           {console.log(this.state)}
