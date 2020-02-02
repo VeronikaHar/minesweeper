@@ -14,8 +14,8 @@ export default class Index extends React.Component {
 
   /** initializes state */
   state = {
-    mines: 5,
-    boardSize: 4,
+    mines: 10,
+    boardSize: 10,
     mineIndeces: [],
     mineCoord: [],
     flagIndeces: [],
@@ -48,7 +48,7 @@ export default class Index extends React.Component {
     return squareArr;
   }
 
-  //initializes a two dimensional board with bombs placed
+  //initializes a two dimensional board with bombs placed and all the cell values filled out
   initBoard(boardSize, mineCoord) {
     const board = [];
     for (let i = 0; i < boardSize; i++) {
@@ -68,7 +68,35 @@ export default class Index extends React.Component {
       board[mine.x][mine.y].value = "Mine";
     });
 
+    //fill out remaining cells with values
+    for (let i = 0; i < boardSize; i++) {
+      for (let j = 0; j < boardSize; j++) {
+        if (board[i][j].value !== "Mine") {
+          const mineCount = this.countMines(board, i, j);
+          board[i][j].value = mineCount;
+        } else { continue }
+      }
+    }
+
     this.setState({ board })
+  }
+
+  //count mines in neighbouring cells
+  countMines(board, x, y) {
+    let mineCount = 0;
+
+    //loop through all adjacent cells
+    for (let i = x - 1; i < x + 2; i++) {
+      for (let j = y - 1; j < y + 2; j++) {
+
+        //check whether coordinates are valid
+        if (this.state.boardSize > i && i > -1 &&
+          this.state.boardSize > j && j > -1) {
+          if (board[i][j].value == "Mine") { mineCount++; }
+        } else { continue }
+      }
+    }
+    return mineCount;
   }
 
   //handle left click
@@ -87,7 +115,21 @@ export default class Index extends React.Component {
     if (this.state.mineIndeces.includes(i)) {
       this.setState({ bombClicked: true });
     } else {
-      this.revealCell(x, y)
+      this.revealCell(x, y);
+
+      //when cell value is 0, reveal its neighbouring cells
+      if (this.state.board[x][y].value === 0) {
+        for (let i = x - 1; i < x + 2; i++) {
+          for (let j = y - 1; j < y + 2; j++) {
+
+            //check whether coordinates are valid
+            if (this.state.boardSize > i && i > -1 &&
+              this.state.boardSize > j && j > -1) {
+              this.revealCell(i, j);
+            } else { continue }
+          }
+        }
+      }
     }
   }
 
@@ -95,32 +137,8 @@ export default class Index extends React.Component {
   revealCell(x, y) {
     let board = { ...this.state.board };
 
-    // check whether the coordinates are valid 
-    if (this.state.boardSize > x && x > -1 &&
-      this.state.boardSize > y && y > -1) {
-      board[x][y].isRevealed = true;
-
-      const mineCount = this.countMines(x, y);
-      board[x][y].value = mineCount;
-
-    }
+    board[x][y].isRevealed = true;
     this.setState({ board });
-  }
-
-  //count mines in neighbouring cells
-  countMines(x, y) {
-    let mineCount = 0;
-    //loop through all adjacent cells
-    for (let i = x - 1; i < x + 2; i++) {
-      for (let j = y - 1; j < y + 2; j++) {
-        if (this.state.boardSize > i && i > -1 &&
-          this.state.boardSize > j && j > -1) {
-          console.log("IJ", i, j)
-          if (this.state.board[i][j].value == "Mine") { mineCount++; }
-        } else { continue }
-      }
-    }
-    return mineCount;
   }
 
   //assign random indeces from the board to mines and get mine coordinates on the board
