@@ -123,16 +123,7 @@ export default class Index extends React.Component {
 
       //when cell value is 0, reveal its neighbouring cells
       if (this.state.board[x][y].value === 0) {
-        for (let i = x - 1; i < x + 2; i++) {
-          for (let j = y - 1; j < y + 2; j++) {
-
-            //check whether coordinates are valid
-            if (this.state.boardSize > i && i > -1 &&
-              this.state.boardSize > j && j > -1) {
-              this.revealCell(i, j);
-            } else { continue }
-          }
-        }
+        this.revealEmpty(x, y);
       }
     }
 
@@ -146,6 +137,27 @@ export default class Index extends React.Component {
 
     board[x][y].isRevealed = true;
     this.setState({ board });
+  }
+
+  //reveal neighbouring cells if cell value is 0
+  revealEmpty(x, y) {
+    let neighbouringCells = [];
+    for (let i = x - 1; i < x + 2; i++) {
+      for (let j = y - 1; j < y + 2; j++) {
+
+        //check whether coordinates are valid
+        if (this.state.boardSize > i && i > -1 &&
+          this.state.boardSize > j && j > -1 && !this.state.board[i][j].isRevealed) {
+          this.revealCell(i, j);
+          neighbouringCells.push(this.state.board[i][j]);
+        } else { continue }
+      }
+    }
+
+    //reveal cells untill neighbour cell value is not 0
+    neighbouringCells.map(cell => {
+      if (cell.value === 0) { this.revealEmpty(cell.x, cell.y) }
+    })
   }
 
   //check whether the number of hidden cells equals the number of mines, i.e. game won
