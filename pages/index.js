@@ -1,21 +1,23 @@
 import React from 'react';
-import Layout from '../components/layout';
 
 // game components
+import Layout from '../components/layout';
 import Desk from '../components/desk';
 import Square from '../components/square';
 import Mine from '../components/mine';
 import Flag from '../components/flag';
+import Button from '../components/button';
 
 export default class Index extends React.Component {
   constructor(props) {
     super(props);
   }
 
-  /** initializes state */
+  // initialize state
   state = {
     mines: 10,
     boardSize: 10,
+    newSize: 10,
     mineIndeces: [],
     mineCoord: [],
     flagIndeces: [],
@@ -25,33 +27,28 @@ export default class Index extends React.Component {
     minesLeft: 0
   }
 
-  //create an array of Square elements
-  createBoard() {
-    let squareArr = [];
-    for (let i = 0; i < (this.state.boardSize * this.state.boardSize); i++) {
-      let y = Math.floor(i / this.state.boardSize),
-        x = i - (this.state.boardSize * y);
-      squareArr.push(
-        <Square
-          key={i}
-          disabled={this.state.bombClicked ? i + 1 : "" || this.state.board[0] && this.state.board[x][y].isRevealed ? this.state.board[x][y] : ""}
-          onClick={() => this.handleRightClick(i, x, y)}
-          onContextMenu={(e) => {
-            //prevent left click default menu from opening
-            e.preventDefault(),
-              this.handleLeftClick(i)
-          }}
-        >
-          {this.state.mineIndeces.includes(i) && this.state.bombClicked ? <Mine /> : ""}
-          {this.state.board[0] && this.state.board[x][y].isRevealed ? this.state.board[x][y].value : ""}
-          {this.state.flagIndeces.includes(i) && !this.state.bombClicked ? <Flag /> : ""}
-        </Square>)
+  //assign random indeces from the board to mines, get mine coordinates on the board and trigger board initialization
+  placeMines = () => {
+    let mineIndeces = [];
+    for (let i = 0; mineIndeces.length < this.state.mines; i++) {
+      let index = Math.floor(Math.random() * this.state.boardSize * this.state.boardSize);
+      if (mineIndeces.indexOf(index) === -1) {
+        mineIndeces.push(index);
+      }
     }
-    return squareArr;
+
+    let mineCoord = [];
+    for (let i = 0; i < mineIndeces.length; i++) {
+      let y = Math.floor(mineIndeces[i] / this.state.boardSize),
+        x = mineIndeces[i] - (this.state.boardSize * y);
+      mineCoord.push({ x, y })
+    }
+
+    this.setState({ mineCoord, mineIndeces, mineCount: this.state.mines, board: [], bombClicked: false, flagIndeces: [], gameStatus: "(active)", }, () => { this.initBoard(this.state.newSize) });
   }
 
-  //initializes a two dimensional board with bombs placed and all the cell values filled out
-  initBoard(boardSize, mineCoord) {
+  //initialize a two dimensional board with bombs placed and all the cell values filled out
+  initBoard = (boardSize) => {
     const board = [];
     for (let i = 0; i < boardSize; i++) {
       board[i] = [];
@@ -66,7 +63,7 @@ export default class Index extends React.Component {
     }
 
     //place bombs
-    mineCoord.forEach(mine => {
+    this.state.mineCoord.forEach(mine => {
       board[mine.x][mine.y].value = "Mine";
     });
 
@@ -81,6 +78,34 @@ export default class Index extends React.Component {
     }
 
     this.setState({ board })
+  }
+
+  //create an array of functional Square elements
+  createBoard(boardSize) {
+
+    //create the board only after it was initialized with the new size
+    if (this.state.board[boardSize - 1]) {
+      let squareArr = [];
+      for (let i = 0; i < (boardSize * boardSize); i++) {
+        let y = Math.floor(i / boardSize),
+          x = i - (boardSize * y);
+        squareArr.push(
+          <Square
+            key={i}
+            disabled={this.state.bombClicked ? i + 1 : "" || this.state.board[x][y].isRevealed ? this.state.board[x][y] : ""}
+            onClick={() => this.handleRightClick(i, x, y)}
+            onContextMenu={(e) => {
+              e.preventDefault(),
+                this.handleLeftClick(i)
+            }}
+          >
+            {this.state.mineIndeces.includes(i) && this.state.bombClicked ? <Mine /> : ""}
+            {this.state.board[x][y].isRevealed ? this.state.board[x][y].value : ""}
+            {this.state.flagIndeces.includes(i) && !this.state.bombClicked ? <Flag /> : ""}
+          </Square>)
+      }
+      return squareArr;
+    }
   }
 
   //count mines in neighbouring cells
@@ -113,7 +138,7 @@ export default class Index extends React.Component {
     this.setState({ mineCount: this.state.mines - this.state.flagIndeces.length - 1 })
   }
 
-  //handle right click
+  //handle right click by revealing the cell and its neighbours, when cell value is 0
   handleRightClick(i, x, y) {
     if (this.state.mineIndeces.includes(i)) {
       this.setState({ bombClicked: true, gameStatus: "(game over)" });
@@ -176,43 +201,34 @@ export default class Index extends React.Component {
     }
   }
 
-  //assign random indeces from the board to mines and get mine coordinates on the board
-  placeMine = () => {
-    let mineIndeces = [];
-    for (let i = 0; mineIndeces.length < this.state.mines; i++) {
-      let index = Math.floor(Math.random() * this.state.boardSize * this.state.boardSize);
-      if (mineIndeces.indexOf(index) === -1) {
-        mineIndeces.push(index);
-      }
-    }
-
-    let mineCoord = [];
-    for (let i = 0; i < mineIndeces.length; i++) {
-      let y = Math.floor(mineIndeces[i] / this.state.boardSize),
-        x = mineIndeces[i] - (this.state.boardSize * y);
-      mineCoord.push({ x, y })
-    }
-
-    this.setState({ mineCoord, mineIndeces });
-  }
-
-  componentWillMount() {
-    this.placeMine();
-    this.setState({ mineCount: this.state.mines })
-  }
-
   componentDidMount() {
-    this.initBoard(this.state.boardSize, this.state.mineCoord)
+    this.placeMines();
   }
 
   render() {
     return (
       <Layout title={`Minesweeper ${this.state.gameStatus}`} mineCount={`Mines left: ${this.state.mineCount}`}>
+        <div>
+          <label htmlFor="boardSize" style={{ padding: '10px' }}>Board Size:  </label>
+          <input
+            type="number"
+            name="boardSize"
+            value={this.state.newSize || 10}
+            style={{ padding: '10px', width: '60px' }}
+            onChange={(event) => this.setState({ newSize: parseFloat(event.target.value) })} />
+          <label htmlFor="mines" style={{ padding: '10px' }}> Mines:  </label>
+          <input
+            type="number"
+            name="mines"
+            value={this.state.mines || 10}
+            style={{ padding: '10px', width: '60px' }}
+            onChange={(event) => this.setState({ mines: parseFloat(event.target.value) })} />
+        </div>
+        <Button onClick={() => this.setState({ boardSize: this.state.newSize }, () => this.placeMines())}>New Game</Button>
         <Desk boardSize={this.state.boardSize}>
-          {this.createBoard()}
-          {console.log(this.state)}
+          {this.state.boardSize === this.state.newSize ? this.createBoard(this.state.boardSize) : ''}
         </Desk>
-      </Layout>
+      </Layout >
     )
   }
 }
